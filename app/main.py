@@ -1,15 +1,14 @@
-from pathlib import Path
-from dotenv import load_dotenv
-from google import genai
-import os
+from tools.data_loader import DataLoader
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+df = DataLoader.load("../data/sample.csv")
 
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+print(df)
 
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents="Hello! Tell me a fun fact about AI."
-)
+print("\n===== DATASET SUMMARY =====\n")
 
-print(response.text)
+summary = DataLoader.summary(df)
+
+for key, value in summary.items():
+    print(f"{key}:")
+    print(value)
+    print()
