@@ -1,14 +1,34 @@
 from tools.data_loader import DataLoader
+from tools.dataset_inspector import DatasetInspector
+from services.analyst_service import AnalystService
 
-df = DataLoader.load("../data/sample.csv")
 
-print(df)
+def main():
 
-print("\n===== DATASET SUMMARY =====\n")
+    print("=" * 60)
+    print("ENTERPRISE AI ANALYST")
+    print("=" * 60)
 
-summary = DataLoader.summary(df)
+    # Load dataset
+    df = DataLoader.load("../data/sample.csv")
 
-for key, value in summary.items():
-    print(f"{key}:")
-    print(value)
-    print()
+    # Inspect dataset
+    report = DatasetInspector.inspect(df)
+
+    print("\nInspecting dataset...\n")
+
+    analyst = AnalystService()
+
+    print("Sending report to Gemini...\n")
+
+    analysis = analyst.analyze(report)
+
+    print("=" * 60)
+    print("AI ANALYSIS")
+    print("=" * 60)
+
+    print(analysis)
+
+
+if __name__ == "__main__":
+    main()
