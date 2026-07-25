@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 
+from app.services.gemini_client import GeminiClient
 from app.tools.python_executor import PythonExecutor
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
@@ -11,64 +12,85 @@ load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 class PythonService:
 
     def __init__(self):
-        self.client = genai.Client(
-            api_key=os.getenv("GOOGLE_API_KEY")
-        )
+        self.gemini = GeminiClient()
 
     def ask(self, df, question):
 
         prompt = f"""
-You are a Python data analyst.
+    You are an expert Python data analyst.
 
-A pandas DataFrame called df already exists.
+    A pandas DataFrame called df already exists.
 
-The user asked:
+    The user asked:
 
-{question}
+    {question}
 
-Return ONLY ONE valid pandas expression.
+    Generate ONLY valid Python code.
 
-Rules:
+    Rules:
 
-- Return ONLY Python code.
-- Do NOT explain anything.
-- Do NOT use markdown.
-- Do NOT use ```python.
-- Do NOT assign variables.
-- The expression must evaluate directly.
+    - Return ONLY Python code.
+    - No explanations.
+    - No markdown.
+    - No ```python.
+    - Assume pandas is already imported as pd.
+    - plotly.express has already been imported as px.
+    - The final object MUST be stored in a variable called result.
 
-Examples:
+    Examples:
 
-Question:
-How many rows?
+    Question:
+    Average salary
 
-Answer:
-len(df)
+    Answer:
 
-Question:
-Average salary?
+    result = df["Salary"].mean()
 
-Answer:
-df["Salary"].mean()
 
-Question:
-Highest salary?
+    Question:
+    Employees older than 30
 
-Answer:
-df.loc[df["Salary"].idxmax()]
-"""
+    Answer:
 
-        response = self.client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
-        )
+    result = df[df["Age"] > 30]
 
-        code = response.text.strip()
 
-        # Remove markdown fences if Gemini accidentally adds them
-        code = code.replace("```python", "")
-        code = code.replace("```", "")
-        code = code.strip()
+    Question:
+    Salary by department
+
+    Answer:
+
+    result = (
+        df.groupby("Department")["Salary"]
+        .mean()
+    )
+
+
+    Question:
+    Plot salary vs age
+
+    Answer:
+
+    result = px.scatter(
+        df,
+        x="Age",
+        y="Salary",
+        color="Department"
+    )
+
+
+    Question:
+    Histogram of salaries
+
+    Answer:
+
+    result = px.histogram(
+        df,
+        x="Salary"
+    )
+    """
+
+        code = self.gemini.generate(prompt)
 
         result = PythonExecutor.execute(df, code)
 

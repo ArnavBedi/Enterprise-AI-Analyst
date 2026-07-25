@@ -1,4 +1,5 @@
 import pandas as pd
+import plotly.express as px
 
 
 class PythonExecutor:
@@ -6,22 +7,25 @@ class PythonExecutor:
     @staticmethod
     def execute(df: pd.DataFrame, code: str):
         """
-        Executes AI-generated pandas code safely.
+        Executes AI-generated Python code safely.
+        The generated code must assign its final output
+        to a variable called 'result'.
         """
 
         local_vars = {
             "df": df,
-            "pd": pd
+            "pd": pd,
+            "px": px
         }
 
         try:
-            result = eval(
+            exec(
                 code,
                 {"__builtins__": {}},
                 local_vars
             )
 
-            return result
+            return local_vars.get("result")
 
         except Exception as e:
-            return f"Execution Error: {e}"
+            return f"Execution Error:\n\n{e}"

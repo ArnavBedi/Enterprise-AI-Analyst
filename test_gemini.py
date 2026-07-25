@@ -1,6 +1,7 @@
 from google import genai
 from dotenv import load_dotenv
 import os
+from app.services.gemini_client import GeminiClient
 
 load_dotenv()
 

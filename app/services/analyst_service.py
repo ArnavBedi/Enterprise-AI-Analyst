@@ -1,21 +1,13 @@
-from google import genai
-from dotenv import load_dotenv
-from pathlib import Path
-import os
+from .gemini_client import GeminiClient
 import json
-
-load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 
 class AnalystService:
 
     def __init__(self):
+        self.gemini = GeminiClient()
 
-        self.client = genai.Client(
-            api_key=os.getenv("GOOGLE_API_KEY")
-        )
-
-    def analyze(self, report: dict) -> str:
+    def analyze(self, report: dict):
 
         prompt = f"""
 You are a senior enterprise data analyst.
@@ -39,9 +31,4 @@ Please provide:
 Keep the response professional.
 """
 
-        response = self.client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
-        )
-
-        return response.text
+        return self.gemini.generate(prompt)

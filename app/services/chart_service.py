@@ -1,0 +1,78 @@
+from google import genai
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+
+from app.services.gemini_client import GeminiClient
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+
+
+class ChartService:
+
+    def __init__(self):
+        self.gemini = GeminiClient()
+
+    def generate_chart(self, df, question):
+
+        columns = list(df.columns)
+        dtypes = {
+            col: str(dtype)
+            for col, dtype in df.dtypes.items()
+        }
+
+        preview = df.head(25).to_string(index=False)
+
+        prompt = f"""
+You are an expert data visualization engineer.
+
+A pandas DataFrame called df already exists.
+
+Columns:
+
+{columns}
+
+Data Types:
+
+{dtypes}
+
+Dataset Preview:
+
+{preview}
+
+The user requested:
+
+{question}
+
+Generate ONLY valid Python code.
+
+Rules:
+
+- Return ONLY Python code.
+- No markdown.
+- No explanation.
+- Do NOT import anything.
+- plotly.express is already available as px.
+- pandas is already available as pd.
+- Store the final figure in a variable named result.
+
+Example:
+
+result = px.scatter(
+    df,
+    x="Age",
+    y="Salary",
+    color="Department"
+)
+"""
+
+        code = self.gemini.generate(prompt)
+
+        code = (
+            code
+            .replace("```python", "")
+            .replace("```", "")
+            .strip()
+        )
+
+        return code

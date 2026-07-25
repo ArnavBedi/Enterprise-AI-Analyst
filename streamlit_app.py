@@ -1,11 +1,14 @@
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 
 from app.tools.dataset_inspector import DatasetInspector
 from app.services.analyst_service import AnalystService
 from app.tools.visualizer import Visualizer
 from app.services.chat_service import ChatService
 from app.services.python_service import PythonService
+from app.tools.dashboard_builder import DashboardBuilder
+from app.services.chart_service import ChartService
 
 st.set_page_config(
     page_title="Enterprise AI Analyst",
@@ -58,12 +61,12 @@ if uploaded_file is not None:
 
     st.subheader("Dataset Overview")
 
-    col1, col2, col3, col4 = st.columns(4)
+    metrics = DashboardBuilder.build(df)
 
-    col1.metric("Rows", len(df))
-    col2.metric("Columns", len(df.columns))
-    col3.metric("Missing Values", int(df.isnull().sum().sum()))
-    col4.metric("Duplicates", int(df.duplicated().sum()))
+    cols = st.columns(4)
+
+    for i, (name, value) in enumerate(metrics.items()):
+        cols[i % 4].metric(name, value)
 
     # -----------------------------
     # Inspection Report
@@ -204,7 +207,61 @@ if uploaded_file is not None:
 
                 st.markdown("### Result")
 
-                if hasattr(result, "shape"):
-                    st.dataframe(result)
+                if isinstance(result, pd.DataFrame):
+                    st.dataframe(result, use_container_width=True)
+
+                elif isinstance(result, pd.Series):
+                    st.dataframe(result.to_frame(), use_container_width=True)
+
+                elif isinstance(result, go.Figure):
+                    st.plotly_chart(result, use_container_width=True)
+
+                elif isinstance(result, (list, tuple, dict)):
+                    st.json(result)
+
                 else:
                     st.write(result)
+
+        st.divider()
+
+        st.subheader("🎨 AI Chart Generator")
+
+        chart_prompt = st.text_input(
+            "Describe a chart to generate",
+            placeholder="Example: Plot Salary vs Age",
+            key="chart_prompt"
+        )
+
+        if st.button("Generate Chart"):
+
+            if chart_prompt.strip():
+
+                with st.spinner("Generating chart..."):
+
+                    chart_service = ChartService()
+
+                    code = chart_service.generate_chart(
+                        df,
+                        chart_prompt
+                    )
+
+                    st.markdown("### Generated Python")
+
+                    st.code(code, language="python")
+
+                    from app.tools.python_executor import PythonExecutor
+
+                    chart = PythonExecutor.execute(
+                        df,
+                        code
+                    )
+
+                    st.markdown("### Chart")
+
+                    if hasattr(chart, "to_plotly_json"):
+                        st.plotly_chart(
+                            chart,
+                            use_container_width=True
+                        )
+                    else:
+                        st.error(chart)

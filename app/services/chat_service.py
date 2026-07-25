@@ -5,15 +5,15 @@ import pandas as pd
 import os
 import json
 
+from app.services.gemini_client import GeminiClient
+
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 
 class ChatService:
 
     def __init__(self):
-        self.client = genai.Client(
-            api_key=os.getenv("GOOGLE_API_KEY")
-        )
+        self.gemini = GeminiClient()
 
     def ask(
         self,
@@ -48,9 +48,4 @@ Instructions:
 - Be concise and professional.
 """
 
-        response = self.client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
-        )
-
-        return response.text
+        return self.gemini.generate(prompt)
