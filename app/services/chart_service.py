@@ -28,6 +28,8 @@ You are an expert data visualization engineer.
 
 A pandas DataFrame called df already exists.
 
+Assign the final Plotly figure to a variable named fig. Do not use any other variable name such as result, chart, or plot.
+
 Columns:
 
 {columns}
