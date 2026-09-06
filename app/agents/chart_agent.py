@@ -20,7 +20,7 @@ class ChartAgent:
             code
         )
 
-        state["code"] = code
+        state["chart_code"] = code
         state["figure"] = figure
 
         return state

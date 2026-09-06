@@ -6,13 +6,14 @@ from app.agents.business_agent import BusinessAgent
 from app.agents.python_agent import PythonAgent
 from app.agents.sql_agent import SQLAgent
 from app.agents.chart_agent import ChartAgent
+from app.services.planner_service import PlannerService
 
 
 business = BusinessAgent()
 python = PythonAgent()
 sql = SQLAgent()
 chart = ChartAgent()
-
+planner = PlannerService()
 
 # -------------------------
 # Router
@@ -20,70 +21,14 @@ chart = ChartAgent()
 
 def router(state: GraphState):
 
-    question = state["question"].lower()
-
-    plan = []
-
-    chart_keywords = [
-        "plot",
-        "graph",
-        "chart",
-        "scatter",
-        "histogram",
-        "bar",
-        "line",
-        "boxplot"
-    ]
-
-    sql_keywords = [
-        "sql",
-        "database",
-        "sqlite",
-        "table"
-    ]
-
-    python_keywords = [
-        "average",
-        "sum",
-        "count",
-        "maximum",
-        "minimum",
-        "calculate",
-        "correlation"
-    ]
-
-    business_keywords = [
-        "summarize",
-        "summary",
-        "explain",
-        "insight",
-        "recommend",
-        "analyze"
-    ]
-
-    # Determine required agents
-
-    if any(word in question for word in sql_keywords):
-        plan.append("sql")
-
-    if any(word in question for word in python_keywords):
-        plan.append("python")
-
-    if any(word in question for word in chart_keywords):
-        plan.append("chart")
-
-    if any(word in question for word in business_keywords):
-        plan.append("business")
-
-    # Default to business analysis
-    if not plan:
-        plan.append("business")
+    plan = planner.create_plan(
+        state["question"]
+    )
 
     state["plan"] = plan
     state["current_step"] = 0
 
     return state
-
 
 # -------------------------
 # Agent Nodes

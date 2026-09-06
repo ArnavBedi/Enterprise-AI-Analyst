@@ -14,7 +14,7 @@ class PythonAgent:
             state["question"]
         )
 
-        state["code"] = code
-        state["answer"] = result
+        state["python_code"] = code
+        state["python_result"] = result
 
         return state

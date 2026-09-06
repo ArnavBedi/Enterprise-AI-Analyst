@@ -1,94 +1,37 @@
-import streamlit as st
+import io
+
 import pandas as pd
+import streamlit as st
 
 from app.tools.dataset_inspector import DatasetInspector
+from app.ui.agent_section import render_agent_section
 from app.ui.dataset_section import render_dataset_section
-from app.ui.visualization_section import render_visualizations
-from app.ui.report_section import render_report
-from app.ui.chat_section import render_chat_section
-from app.ui.python_section import render_python_section
-from app.ui.chart_section import render_chart_section
-from app.ui.sql_section import render_sql_section
 
-st.set_page_config(
-    page_title="Enterprise AI Analyst",
-    page_icon="📊",
-    layout="wide"
-)
 
-# -----------------------------
-# Session State
-# -----------------------------
-
-if "analysis" not in st.session_state:
-    st.session_state.analysis = None
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# -----------------------------
-# Header
-# -----------------------------
-
+st.set_page_config(page_title="Enterprise AI Analyst", page_icon="📊", layout="wide")
 st.title("📊 Enterprise AI Analyst")
-st.write("Upload any CSV dataset and receive an AI-generated business analysis.")
-
-uploaded_file = st.file_uploader(
-    "Upload CSV",
-    type=["csv"]
+st.write(
+    "Analyze an uploaded CSV, an uploaded SQLite database, or a configured "
+    "PostgreSQL database from one autonomous workspace."
 )
 
-# -----------------------------
-# Main App
-# -----------------------------
+uploaded_file = st.file_uploader("Optional: Upload CSV", type=["csv"])
+df = None
+report = None
 
 if uploaded_file is not None:
-
-    df = pd.read_csv(uploaded_file)
+    try:
+        df = pd.read_csv(io.BytesIO(uploaded_file.getvalue()))
+    except pd.errors.EmptyDataError:
+        st.error("The uploaded CSV is empty.")
+        st.stop()
+    except Exception:
+        st.error("Unable to read the CSV file.")
+        st.stop()
 
     render_dataset_section(df)
-
-    # -----------------------------
-    # Inspection Report
-    # -----------------------------
-
     report = DatasetInspector.inspect(df)
+    with st.expander("Dataset inspection report"):
+        st.json(report)
 
-    st.subheader("Dataset Inspection Report")
-    st.json(report)
-
-    # -----------------------------
-    # Visualizations
-    # -----------------------------
-
-    render_visualizations(df)
-
-    # -----------------------------
-    # AI Analysis Button
-    # -----------------------------
-
-    render_report(report)
-
-    # -----------------------------
-    # Chat Section
-    # -----------------------------
-
-    render_chat_section(report, df)
-
-    # -----------------------------
-    # Python Analyst Section
-    # -----------------------------
-
-    render_python_section(df)
-
-    # -----------------------------
-    # AI chart generation Section
-    # -----------------------------
-
-    render_chart_section(df)
-
-    # -----------------------------
-    # SQL Section
-    # -----------------------------
-
-    render_sql_section()
+render_agent_section(df, report)

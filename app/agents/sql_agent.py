@@ -1,20 +1,72 @@
 from app.services.sql_service import SQLService
+from app.tools.sql_executor import SQLExecutor
 from app.state.graph_state import GraphState
+from app.database.connection import DatabaseConnection, DatabaseError
 
 
 class SQLAgent:
 
     def __init__(self):
-        self.sql = SQLService()
+        self.sql_service = SQLService()
 
     def run(self, state: GraphState):
 
-        sql, result = self.sql.ask(
-            state["database_path"],
-            state["question"]
-        )
+        database_url = state.get("database_url")
+        database_path = state.get("database_path")
+        question = state.get("question")
 
-        state["sql"] = sql
-        state["sql_result"] = result
+        # -------------------------
+        # Validate Database
+        # -------------------------
 
-        return state
+        if not database_url and not database_path:
+
+            state["error"] = (
+                "SQL analysis was requested, but no database is connected."
+            )
+
+            state["answer"] = (
+                "Upload a SQLite database or configure the PostgreSQL connection."
+            )
+
+            return state
+
+        try:
+
+            # -------------------------
+            # Generate SQL
+            # -------------------------
+
+            database = (
+                DatabaseConnection(database_url)
+                if database_url
+                else DatabaseConnection.from_sqlite_path(database_path)
+            )
+            state["database_dialect"] = database.dialect
+            sql = self.sql_service.generate_sql(database, question)
+
+            state["sql"] = sql
+
+            # -------------------------
+            # Execute SQL
+            # -------------------------
+
+            result = SQLExecutor.execute(
+                database,
+                sql
+            )
+
+            state["sql_result"] = result
+
+            return state
+
+        except DatabaseError as e:
+
+            state["error"] = (
+                f"SQL analysis failed: {e}"
+            )
+
+            return state
+        except Exception:
+            state["error"] = "SQL analysis failed unexpectedly."
+            return state

@@ -6,31 +6,31 @@ class GraphState(TypedDict):
     # User request
     question: str
 
-    # Uploaded CSV
+    # Data sources
     df: Optional[Any]
-
-    # Dataset inspection report
     report: Optional[dict]
-
-    # SQLite database path
     database_path: Optional[str]
+    database_url: Optional[str]
+    database_dialect: Optional[str]
 
-    # Agent execution plan
+    # Execution plan
     plan: list[str]
-
-    # Current position in the plan
     current_step: int
 
-    # Outputs
-    answer: Optional[str]
+    # Python Agent outputs
+    python_code: Optional[str]
+    python_result: Optional[Any]
 
-    code: Optional[str]
-
+    # Chart Agent outputs
+    chart_code: Optional[str]
     figure: Optional[Any]
 
+    # SQL Agent outputs
     sql: Optional[str]
-
     sql_result: Optional[Any]
+
+    # Final synthesized response
+    answer: Optional[str]
 
     # Error information
     error: Optional[str]

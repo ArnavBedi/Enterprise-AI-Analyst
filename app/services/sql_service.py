@@ -1,5 +1,5 @@
 from app.services.gemini_client import GeminiClient
-import sqlite3
+from app.database.connection import DatabaseConnection
 
 
 class SQLService:
@@ -7,39 +7,13 @@ class SQLService:
     def __init__(self):
         self.gemini = GeminiClient()
 
-    def generate_sql(self, database_path, question):
-
-        connection = sqlite3.connect(database_path)
-
-        cursor = connection.cursor()
-
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table';"
+    def generate_sql(self, database, question):
+        connection = (
+            database
+            if isinstance(database, DatabaseConnection)
+            else DatabaseConnection.from_sqlite_path(database)
         )
-
-        tables = cursor.fetchall()
-
-        schema = ""
-
-        for table in tables:
-
-            table_name = table[0]
-
-            cursor.execute(
-                f"PRAGMA table_info({table_name})"
-            )
-
-            columns = cursor.fetchall()
-
-            schema += f"\nTable: {table_name}\n"
-
-            for column in columns:
-
-                schema += (
-                    f"{column[1]} ({column[2]})\n"
-                )
-
-        connection.close()
+        schema = connection.schema()
 
         prompt = f"""
 You are an expert SQL analyst.
@@ -52,7 +26,11 @@ User question:
 
 {question}
 
-Return ONLY SQLite SQL.
+Return ONLY one read-only {connection.dialect} SELECT query.
+
+Use only tables and columns listed in the schema. Qualify table names with
+their schema when one is shown. Never generate INSERT, UPDATE, DELETE, DDL,
+transaction control, locking clauses, stored procedure calls, or file access.
 
 Do not explain anything.
 

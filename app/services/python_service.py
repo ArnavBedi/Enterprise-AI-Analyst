@@ -1,12 +1,5 @@
-from google import genai
-from dotenv import load_dotenv
-from pathlib import Path
-import os
-
 from app.services.gemini_client import GeminiClient
 from app.tools.python_executor import PythonExecutor
-
-load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 
 class PythonService:
@@ -17,81 +10,95 @@ class PythonService:
     def ask(self, df, question):
 
         prompt = f"""
-    You are an expert Python data analyst.
+You are the Python computation agent in a multi-agent
+enterprise data analysis system.
 
-    A pandas DataFrame called df already exists.
+A pandas DataFrame called df already exists.
 
-    The user asked:
+The user's overall request is:
 
-    {question}
+{question}
 
-    Generate ONLY valid Python code.
+Your responsibility is ONLY to perform the numerical,
+statistical, filtering, aggregation, or tabular analysis
+required by the request.
 
-    Rules:
+Other specialized agents handle visualization and explanation.
 
-    - Return ONLY Python code.
-    - No explanations.
-    - No markdown.
-    - No ```python.
-    - Assume pandas is already imported as pd.
-    - plotly.express has already been imported as px.
-    - The final object MUST be stored in a variable called result.
+Generate ONLY valid Python code.
 
-    Examples:
+Rules:
 
-    Question:
-    Average salary
+- Return ONLY Python code.
+- No explanations.
+- No markdown.
+- No ```python.
+- Assume pandas is already imported as pd.
+- The DataFrame is already available as df.
+- The final analytical output MUST be stored in a variable
+  called result.
 
-    Answer:
+IMPORTANT:
 
-    result = df["Salary"].mean()
+- Do NOT create charts or visualizations.
+- Do NOT use Plotly.
+- Do NOT use px.
+- Do NOT provide business explanations.
+- Do NOT generate written summaries.
+- Do NOT perform work that belongs to another agent.
+- Only calculate or extract the information needed from df.
 
+Examples:
 
-    Question:
-    Employees older than 30
+Question:
+Average salary
 
-    Answer:
+Answer:
 
-    result = df[df["Age"] > 30]
-
-
-    Question:
-    Salary by department
-
-    Answer:
-
-    result = (
-        df.groupby("Department")["Salary"]
-        .mean()
-    )
-
-
-    Question:
-    Plot salary vs age
-
-    Answer:
-
-    result = px.scatter(
-        df,
-        x="Age",
-        y="Salary",
-        color="Department"
-    )
+result = df["Salary"].mean()
 
 
-    Question:
-    Histogram of salaries
+Question:
+Employees older than 30
 
-    Answer:
+Answer:
 
-    result = px.histogram(
-        df,
-        x="Salary"
-    )
-    """
+result = df[df["Age"] > 30]
+
+
+Question:
+Salary by department
+
+Answer:
+
+result = (
+    df.groupby("Department")["Salary"]
+    .mean()
+)
+
+
+Question:
+Calculate average salary and plot salary vs age
+
+Answer:
+
+result = df["Salary"].mean()
+
+
+Question:
+Calculate average salary, plot salary vs age,
+and explain the result
+
+Answer:
+
+result = df["Salary"].mean()
+"""
 
         code = self.gemini.generate(prompt)
 
-        result = PythonExecutor.execute(df, code)
+        result = PythonExecutor.execute(
+            df,
+            code
+        )
 
         return code, result
