@@ -2,6 +2,7 @@ from app.services.sql_service import SQLService
 from app.tools.sql_executor import SQLExecutor
 from app.state.graph_state import GraphState
 from app.database.connection import DatabaseConnection, DatabaseError
+from app.security.audit import query_fingerprint, record_audit_event
 
 
 class SQLAgent:
@@ -38,12 +39,19 @@ class SQLAgent:
             # -------------------------
 
             database = (
-                DatabaseConnection(database_url)
+                DatabaseConnection(
+                    database_url,
+                    profile_name=state.get("database_profile") or "Default",
+                )
                 if database_url
                 else DatabaseConnection.from_sqlite_path(database_path)
             )
             state["database_dialect"] = database.dialect
-            sql = self.sql_service.generate_sql(database, question)
+            sql = self.sql_service.generate_sql(
+                database,
+                question,
+                conversation_history=state.get("conversation_history", []),
+            )
 
             state["sql"] = sql
 
@@ -57,10 +65,42 @@ class SQLAgent:
             )
 
             state["sql_result"] = result
+            state["sql_diagnostics"] = {
+                key: result.attrs.get(key)
+                for key in (
+                    "profile",
+                    "database",
+                    "dialect",
+                    "row_count",
+                    "duration_ms",
+                    "truncated",
+                    "max_rows",
+                    "estimated_cost",
+                )
+            }
+            record_audit_event(
+                "sql_query",
+                success=True,
+                profile=database.profile_name,
+                dialect=database.dialect,
+                query_id=query_fingerprint(sql),
+                row_count=result.attrs.get("row_count"),
+                duration_ms=result.attrs.get("duration_ms"),
+                truncated=result.attrs.get("truncated"),
+                estimated_cost=result.attrs.get("estimated_cost"),
+            )
 
             return state
 
         except DatabaseError as e:
+
+            record_audit_event(
+                "sql_query",
+                success=False,
+                profile=state.get("database_profile"),
+                dialect=state.get("database_dialect"),
+                reason=str(e),
+            )
 
             state["error"] = (
                 f"SQL analysis failed: {e}"

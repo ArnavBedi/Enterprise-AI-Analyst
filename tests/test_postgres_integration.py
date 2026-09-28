@@ -1,6 +1,8 @@
 import os
 
 import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.database.connection import DatabaseConnection
 
@@ -11,7 +13,17 @@ from app.database.connection import DatabaseConnection
 )
 def test_postgres_read_only_connection():
     database = DatabaseConnection(os.environ["TEST_DATABASE_URL"])
-    assert "Postgresql" in database.test()
+    assert "PostgreSQL" in database.test()
     assert "employees" in database.schema()
+    assert "Relationships:" in database.schema()
     result = database.execute_read_only("SELECT COUNT(*) AS count FROM employees")
     assert result.iloc[0]["count"] > 0
+    assert result.attrs["estimated_cost"] is not None
+
+    engine = create_engine(os.environ["TEST_DATABASE_URL"])
+    try:
+        with pytest.raises(SQLAlchemyError):
+            with engine.begin() as connection:
+                connection.execute(text("DELETE FROM employees"))
+    finally:
+        engine.dispose()

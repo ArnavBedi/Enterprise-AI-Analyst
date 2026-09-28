@@ -7,7 +7,7 @@ class PythonService:
     def __init__(self):
         self.gemini = GeminiClient()
 
-    def ask(self, df, question):
+    def ask(self, df, question, conversation_history=None):
 
         prompt = f"""
 You are the Python computation agent in a multi-agent
@@ -18,6 +18,10 @@ A pandas DataFrame called df already exists.
 The user's overall request is:
 
 {question}
+
+Recent conversation context:
+
+{(conversation_history or [])[-6:]}
 
 Your responsibility is ONLY to perform the numerical,
 statistical, filtering, aggregation, or tabular analysis

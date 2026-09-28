@@ -1,6 +1,6 @@
-from tools.data_loader import DataLoader
-from tools.dataset_inspector import DatasetInspector
-from services.analyst_service import AnalystService
+from app.tools.data_loader import DataLoader
+from app.tools.dataset_inspector import DatasetInspector
+from app.services.analyst_service import AnalystService
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
     print("=" * 60)
 
     # Load dataset
-    df = DataLoader.load("../data/sample.csv")
+    df = DataLoader.load("data/sample.csv")
 
     # Inspect dataset
     report = DatasetInspector.inspect(df)

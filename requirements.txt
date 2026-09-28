@@ -76,6 +76,9 @@ polars-runtime-32==1.42.1
 proto-plus==1.28.1
 protobuf==5.29.6
 psycopg2-binary==2.9.12
+PyMySQL==1.1.2
+pytest==8.4.2
+kaleido==1.2.0
 pyarrow==24.0.0
 pyasn1==0.6.4
 pyasn1_modules==0.4.2

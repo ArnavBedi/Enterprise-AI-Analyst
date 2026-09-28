@@ -12,6 +12,8 @@ class BusinessAgent:
         report = state.get("report")
         python_result = state.get("python_result")
         sql_result = state.get("sql_result")
+        prior_python_result = state.get("prior_python_result")
+        prior_sql_result = state.get("prior_sql_result")
 
         prompt = f"""
 You are a senior enterprise data analyst.
@@ -22,6 +24,9 @@ concise, grounded answer to the user's request.
 USER REQUEST:
 {state["question"]}
 
+RECENT CONVERSATION:
+{state.get("conversation_history", [])[-6:]}
+
 DATASET INSPECTION REPORT:
 {report}
 
@@ -30,6 +35,12 @@ PYTHON ANALYSIS RESULT:
 
 SQL ANALYSIS RESULT:
 {sql_result}
+
+PRIOR PYTHON RESULT (use only when the current request refers to it):
+{prior_python_result}
+
+PRIOR SQL RESULT (use only when the current request refers to it):
+{prior_sql_result}
 
 IMPORTANT RULES:
 

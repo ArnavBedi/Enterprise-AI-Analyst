@@ -30,6 +30,9 @@ def test_sqlite_schema_and_query(sqlite_database):
         {"department": "Engineering", "average_salary": 87500.0},
         {"department": "Finance", "average_salary": 91000.0},
     ]
+    assert result.attrs["row_count"] == 2
+    assert result.attrs["duration_ms"] >= 0
+    assert result.attrs["dialect"] == "sqlite"
 
 
 @pytest.mark.parametrize("query", [
@@ -37,6 +40,7 @@ def test_sqlite_schema_and_query(sqlite_database):
     "SELECT * FROM employees; DROP TABLE employees",
     "SELECT * FROM employees FOR UPDATE",
     "PRAGMA table_info(employees)",
+    "SELECT pg_sleep(10)",
 ])
 def test_mutating_or_multiple_statements_are_rejected(query):
     with pytest.raises(DatabaseError):

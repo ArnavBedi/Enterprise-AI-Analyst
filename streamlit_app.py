@@ -4,11 +4,12 @@ import pandas as pd
 import streamlit as st
 
 from app.tools.dataset_inspector import DatasetInspector
-from app.ui.agent_section import render_agent_section
+from app.ui.agent_section import render_agent_section, render_authentication_gate
 from app.ui.dataset_section import render_dataset_section
 
 
 st.set_page_config(page_title="Enterprise AI Analyst", page_icon="📊", layout="wide")
+render_authentication_gate()
 st.title("📊 Enterprise AI Analyst")
 st.write(
     "Analyze an uploaded CSV, an uploaded SQLite database, or a configured "
@@ -18,6 +19,7 @@ st.write(
 uploaded_file = st.file_uploader("Optional: Upload CSV", type=["csv"])
 df = None
 report = None
+csv_source_id = None
 
 if uploaded_file is not None:
     try:
@@ -31,7 +33,8 @@ if uploaded_file is not None:
 
     render_dataset_section(df)
     report = DatasetInspector.inspect(df)
+    csv_source_id = f"{uploaded_file.name}:{uploaded_file.size}"
     with st.expander("Dataset inspection report"):
         st.json(report)
 
-render_agent_section(df, report)
+render_agent_section(df, report, csv_source_id=csv_source_id)

@@ -22,7 +22,13 @@ planner = PlannerService()
 def router(state: GraphState):
 
     plan = planner.create_plan(
-        state["question"]
+        state["question"],
+        conversation_history=state.get("conversation_history", []),
+        has_csv=state.get("df") is not None,
+        has_database=bool(
+            state.get("database_url") or state.get("database_path")
+        ),
+        has_prior_sql_result=state.get("prior_sql_result") is not None,
     )
 
     state["plan"] = plan
@@ -55,6 +61,9 @@ def chart_node(state: GraphState):
 # -------------------------
 
 def route_next(state: GraphState):
+
+    if state.get("error"):
+        return END
 
     plan = state["plan"]
     current_step = state["current_step"]

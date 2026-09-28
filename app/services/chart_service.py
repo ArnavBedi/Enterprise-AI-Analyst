@@ -1,7 +1,5 @@
-from google import genai
 from dotenv import load_dotenv
 from pathlib import Path
-import os
 
 from app.services.gemini_client import GeminiClient
 
@@ -13,7 +11,7 @@ class ChartService:
     def __init__(self):
         self.gemini = GeminiClient()
 
-    def generate_chart(self, df, question):
+    def generate_chart(self, df, question, conversation_history=None):
 
         columns = list(df.columns)
         dtypes = {
@@ -46,6 +44,10 @@ The user requested:
 
 {question}
 
+Recent conversation context:
+
+{(conversation_history or [])[-6:]}
+
 Generate ONLY valid Python code.
 
 Rules:
@@ -57,6 +59,8 @@ Rules:
 - plotly.express is already available as px.
 - pandas is already available as pd.
 - Store the final figure in a variable named result.
+- Use only columns that appear above.
+- Choose an appropriate chart when the follow-up request says "visualize that".
 
 Example:
 
