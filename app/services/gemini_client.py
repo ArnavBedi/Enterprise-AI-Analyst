@@ -13,10 +13,8 @@ load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 class GeminiClient:
 
     def __init__(self):
-
-        self.client = genai.Client(
-            api_key=os.getenv("GOOGLE_API_KEY")
-        )
+        api_key = os.getenv("GOOGLE_API_KEY", "").strip()
+        self.client = genai.Client(api_key=api_key) if api_key else None
 
         self.models = [
             "gemini-3.5-flash",
@@ -25,6 +23,8 @@ class GeminiClient:
         ]
 
     def generate(self, prompt: str):
+
+        self._require_client()
 
         last_error = None
 
@@ -61,6 +61,8 @@ class GeminiClient:
         raise last_error
 
     def generate_json(self, prompt: str, schema):
+
+        self._require_client()
 
         last_error = None
 
@@ -102,3 +104,9 @@ class GeminiClient:
                     break
 
         raise last_error
+
+    def _require_client(self):
+        if self.client is None:
+            raise ValueError(
+                "GOOGLE_API_KEY is not configured. Add it to your .env file."
+            )
